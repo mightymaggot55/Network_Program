@@ -182,7 +182,7 @@ namespace Test_Server_C_Sharp
         //Fire up listener to create new threads
         ManualResetEvent wait_start_up = new ManualResetEvent(false);
         
-        server_listener = new Listener(server_port, wait_start_up, addServer);
+        server_listener = new Listener(server_port, wait_start_up, Add_Server);
         wait_start_up.Reset();
         Thread listen_thread = new Thread(new ThreadStart(server_listener.Start));
             listen_thread.Start();
@@ -196,28 +196,6 @@ namespace Test_Server_C_Sharp
             }
             Console.WriteLine("Connected Server Listener on Port: " + server_port);
             client_wait.Set();
-        }
-
-        public bool Add_Client(Socket sock)
-        {
-            Connection conn;
-            conn = new Connection(sock, processFS);
-
-            Thread conn_thread = new Thread(new ThreadStart(conn.Start));
-            conn_thread.Start();
-            client_connections.Add(conn);
-            return true;
-        }
-
-        public bool Add_Server(Socket sock)
-        {
-            Connection conn;
-            conn = new Connection(sock, processFS);
-
-            Thread conn_thread = new Thread(new ThreadStart(conn.Start));
-            conn_thread.Start();
-            server_connections.Add(conn);
-            return true;
         }
 
         public int processFS(Connection conn)
@@ -331,14 +309,57 @@ namespace Test_Server_C_Sharp
             return 1;
         }
 
-        public Connection Connect(string hostname, int port, Func<Connection, int> processing_function)
+        //Connect to specifc address
+        public Connection Connect(string _hostname, int _port, Func<Connection, int> _processing_function)
         {
+            #region connect to the specified address
+            System.Net.IPHostEntry ipHostInfo = Dns.GetHostEntry(_hostname);
+            IPAddress _IPAddress = ipHostInfo.AddressList[0];
+            IPEndPoint local_end_point = new IPEndPoint(_IPAddress, _port);
+            Socket sender = new Socket(_IPAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            sender.Connect(local_end_point);
+            #endregion
 
+            Connection connection = new Connection(sender, _processing_function);
+            client_connections.Add(connection);
+
+            Thread client_thread = new Thread(new ThreadStart(connection.Start));
+            client_thread.Start();
+
+            return connection;
         }
-        
+
         public void Write_Servers(string message)
         {
-
+            foreach(Connection server in server_connections)
+            {
+                Console.WriteLine("Writing to FileServer");
+                server._state.Enqueue_Write(message);
+            }
         }
+
+        public bool Add_Client(Socket sock)
+        {
+            Connection conn;
+            conn = new Connection(sock, processFS);
+
+            Thread conn_thread = new Thread(new ThreadStart(conn.Start));
+            conn_thread.Start();
+            client_connections.Add(conn);
+            return true;
+        }
+
+        public bool Add_Server(Socket sock)
+        {
+            Connection conn;
+            conn = new Connection(sock, processFS);
+
+            Thread conn_thread = new Thread(new ThreadStart(conn.Start));
+            conn_thread.Start();
+            server_connections.Add(conn);
+            return true;
+        }
+
+
     }
 }
