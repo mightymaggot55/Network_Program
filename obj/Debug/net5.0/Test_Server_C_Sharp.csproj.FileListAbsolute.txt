@@ -1,0 +1,5 @@
+C:\Users\Michael Work\source\repos\Test_Server_C_Sharp\obj\Debug\net5.0\Test_Server_C_Sharp.csproj.AssemblyReference.cache
+C:\Users\Michael Work\source\repos\Test_Server_C_Sharp\obj\Debug\net5.0\Test_Server_C_Sharp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Michael Work\source\repos\Test_Server_C_Sharp\obj\Debug\net5.0\Test_Server_C_Sharp.AssemblyInfoInputs.cache
+C:\Users\Michael Work\source\repos\Test_Server_C_Sharp\obj\Debug\net5.0\Test_Server_C_Sharp.AssemblyInfo.cs
+C:\Users\Michael Work\source\repos\Test_Server_C_Sharp\obj\Debug\net5.0\Test_Server_C_Sharp.csproj.CoreCompileInputs.cache

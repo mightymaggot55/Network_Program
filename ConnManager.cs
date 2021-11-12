@@ -137,7 +137,7 @@ namespace Test_Server_C_Sharp
             Console.WriteLine("Connected Client (Listener) on Port" + client_port);
             if(!root)
             {
-                servers["ROOT"]._state.enqueueWrite("CLIENTPORT<FS>" + Dns.GetHostEntry(Dns.GetHostName().AddressList[0].ToString() + "<FS>" + client_port));
+                servers["ROOT"]._state.Enqueue_Write("CLIENTPORT<FS>" + Dns.GetHostEntry(Dns.GetHostName().AddressList[0].ToString() + "<FS>" + client_port));
             }
         }
 
@@ -158,7 +158,7 @@ namespace Test_Server_C_Sharp
                     //create new connection - uses sender socket 
                     Connection connection = new Connection(sender, processFS);
                     //create new thread
-                    Thread conn_thread = new Thread(new ThreadStart(connection.start));
+                    Thread conn_thread = new Thread(new ThreadStart(connection.Start));
                     //start new connection thread
                     conn_thread.Start();
                     //add to server connection lists the connection 
@@ -203,7 +203,7 @@ namespace Test_Server_C_Sharp
             Connection conn;
             conn = new Connection(sock, processFS);
 
-            Thread conn_thread = new Thread(new ThreadStart(conn.start));
+            Thread conn_thread = new Thread(new ThreadStart(conn.Start));
             conn_thread.Start();
             client_connections.Add(conn);
             return true;
@@ -214,7 +214,7 @@ namespace Test_Server_C_Sharp
             Connection conn;
             conn = new Connection(sock, processFS);
 
-            Thread conn_thread = new Thread(new ThreadStart(conn.start));
+            Thread conn_thread = new Thread(new ThreadStart(conn.Start));
             conn_thread.Start();
             server_connections.Add(conn);
             return true;
@@ -222,9 +222,9 @@ namespace Test_Server_C_Sharp
 
         public int processFS(Connection conn)
         {
-            if(conn._state.hasRead())
+            if(conn._state.Has_Read())
             {
-                string message = conn._state.dequeue_read();
+                string message = conn._state.Dequeue_Read();
                 string[] message_array = message.Split(""); //Check here - decide what we need to split the string up
 
                 switch(message_array[0])
@@ -239,7 +239,7 @@ namespace Test_Server_C_Sharp
                             {
                                 Console.WriteLine("Writing new connection to: " + s.Key.ToString());
                                 //check this - see what it does
-                                s.Value._state.enqueueWrite("NEWFS<FS>" + message_array[1] + "<FS>" + message_array[2] + "<FS>" + message_array[3]);
+                                s.Value._state.Enqueue_Write("NEWFS<FS>" + message_array[1] + "<FS>" + message_array[2] + "<FS>" + message_array[3]);
                             }
                         }
                         break;
@@ -266,7 +266,7 @@ namespace Test_Server_C_Sharp
                             Connection connection = new Connection(sender, this.processFS);
                             servers.Add(message_array[1], connection);
 
-                            Thread client_thread = new Thread(new ThreadStart(connection.start));
+                            Thread client_thread = new Thread(new ThreadStart(connection.Start));
                             client_thread.Start();
                         }
                         foreach(KeyValuePair<string, Connection> s in servers)
@@ -275,7 +275,7 @@ namespace Test_Server_C_Sharp
                         }
                         break;
                     default:
-                        Console.ForegroundColor = conn._state.cc;
+                        Console.ForegroundColor = conn._state.Console_Color;
                         Console.WriteLine((IPEndPoint)conn._state.sock.RemoteEndPoint).Address.ToString() + ":" + ((IPEndPoint)conn._state.sock.RemoteEndPoint).Port.ToString() + " " + message);
                         Console.ResetColor();
                         break;
@@ -290,10 +290,10 @@ namespace Test_Server_C_Sharp
 
         public int Process_Server(Connection conn)
         {
-            if(conn._state.hasRead())
+            if(conn._state.Has_Read())
             {
                 Console.WriteLine("Process Server");
-                string message = conn._state.dequeueRead();
+                string message = conn._state.Dequeue_Read();
 
                 if(message.StartsWith("READ"))
                 {
@@ -314,14 +314,14 @@ namespace Test_Server_C_Sharp
                     }                    
                 }
 
-                conn._state.enqueueWrite(message);
+                conn._state.Enqueue_Write(message);
 
                 List<string> string_list= main_server.Process_String(message);
-                if(temp != null)
+                if(string_list != null)
                 {
-                    foreach(string s in temp)
+                    foreach(string s in string_list)
                     {
-                        conn._state.enqueueWrite(s);
+                        conn._state.Enqueue_Write(s);
                     }
                 }
             }

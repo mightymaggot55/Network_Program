@@ -64,6 +64,10 @@ namespace Test_Server_C_Sharp
                     stream.Read(buffer, 0, buffer.Length);
 
                 }
+                catch(Exception _error)
+                {
+
+                }
                 
             
             }
