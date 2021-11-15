@@ -10,7 +10,7 @@ namespace Test_Server_C_Sharp
 {
     class Client
     {
-        static void Main(string[] args)
+        public void Test_Server()
         {
             try
             {
@@ -46,7 +46,7 @@ namespace Test_Server_C_Sharp
 
     class server
     {
-        static void Main(string[] args)
+        public void Server()
         {
             TcpListener listener = new TcpListener(System.Net.IPAddress.Any, 1302);
             listener.Start();

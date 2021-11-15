@@ -41,7 +41,7 @@ namespace Test_Server_C_Sharp
 
         public bool Has_Write()
         {
-            if(writeQueue.Count > 0)
+            if (writeQueue.Count > 0)
             {
                 return true;
             }

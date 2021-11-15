@@ -72,7 +72,29 @@ namespace Test_Server_C_Sharp
             //Write to console File Synchronisation Event and the time it occurred
         }
 
-        public ConnManager(int port, bool tryRandom)
+        public bool Add_Client(Socket sock)
+        {
+            Connection conn;
+            conn = new Connection(sock, processFS);
+
+            Thread conn_thread = new Thread(new ThreadStart(conn.Start));
+            conn_thread.Start();
+            client_connections.Add(conn);
+            return true;
+        }
+
+        public bool Add_Server(Socket sock)
+        {
+            Connection conn;
+            conn = new Connection(sock, processFS);
+
+            Thread conn_thread = new Thread(new ThreadStart(conn.Start));
+            conn_thread.Start();
+            server_connections.Add(conn);
+            return true;
+        }
+
+        public ConnManager(int port, bool isServer)
         {
             //create list of server locations {IP, port}
             server_locations = new List<KeyValuePair<IPAddress, int>>();
@@ -100,19 +122,22 @@ namespace Test_Server_C_Sharp
             //handles main processing functions for the server
             main_server = new MainServer(this);
 
-            //additional funcitonality
-            client_wait = new ManualResetEvent(false);
-            client_wait.Reset();
-
             //This can be improved - set up better system for client port
-            this.client_port = port + 1000;
-            this.server_port = port;
             this.base_port = port;
 
-            
-            Start_Server_Listener();
-            Start_Client_Listener();
-            
+            if (isServer == true)
+            {
+                this.server_port = port;
+                Start_Server_Listener();
+            }
+            else if(isServer == false)
+            {
+                //additional funcitonality
+                client_wait = new ManualResetEvent(false);
+                client_wait.Reset();
+                this.client_port = port;
+                Start_Client_Listener();
+            }
         }
 
         public void Start_Client_Listener()
@@ -121,7 +146,7 @@ namespace Test_Server_C_Sharp
             //Fire up a listener to create new threads
             ManualResetEvent wait_start_up = new ManualResetEvent(false);
             //create new client listener
-            client_listener = new Listener(client_port, wait_start_up, Add_Client);
+            client_listener = new Listener(client_port, wait_start_up, clients);
             //resets flag from wait_start_up
             wait_start_up.Reset();
 
@@ -137,7 +162,7 @@ namespace Test_Server_C_Sharp
             Console.WriteLine("Connected Client (Listener) on Port" + client_port);
             if(!root)
             {
-                servers["ROOT"]._state.Enqueue_Write("CLIENTPORT<FS>" + Dns.GetHostEntry(Dns.GetHostName().AddressList[0].ToString() + "<FS>" + client_port));
+                servers["ROOT"]._state.Enqueue_Write("CLIENTPORT<FS>" + Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString() + "<FS>" + client_port);
             }
         }
 
@@ -182,7 +207,7 @@ namespace Test_Server_C_Sharp
         //Fire up listener to create new threads
         ManualResetEvent wait_start_up = new ManualResetEvent(false);
         
-        server_listener = new Listener(server_port, wait_start_up, Add_Server);
+        server_listener = new Listener(server_port, wait_start_up, servers);
         wait_start_up.Reset();
         Thread listen_thread = new Thread(new ThreadStart(server_listener.Start));
             listen_thread.Start();
@@ -195,7 +220,7 @@ namespace Test_Server_C_Sharp
                 Console.WriteLine(((IPEndPoint)servers["ROOT"]._state.sock.RemoteEndPoint).Address.ToString() + ":" + ((IPEndPoint)servers["ROOT"]._state.sock.RemoteEndPoint).Port.ToString());
             }
             Console.WriteLine("Connected Server Listener on Port: " + server_port);
-            client_wait.Set();
+            //client_wait.Set();
         }
 
         public int processFS(Connection conn)
@@ -254,7 +279,7 @@ namespace Test_Server_C_Sharp
                         break;
                     default:
                         Console.ForegroundColor = conn._state.Console_Color;
-                        Console.WriteLine((IPEndPoint)conn._state.sock.RemoteEndPoint).Address.ToString() + ":" + ((IPEndPoint)conn._state.sock.RemoteEndPoint).Port.ToString() + " " + message);
+                        Console.WriteLine(((IPEndPoint)conn._state.sock.RemoteEndPoint).Address.ToString() + ":" + ((IPEndPoint)conn._state.sock.RemoteEndPoint).Port.ToString() + " " + message);
                         Console.ResetColor();
                         break;
                 }
@@ -338,27 +363,7 @@ namespace Test_Server_C_Sharp
             }
         }
 
-        public bool Add_Client(Socket sock)
-        {
-            Connection conn;
-            conn = new Connection(sock, processFS);
-
-            Thread conn_thread = new Thread(new ThreadStart(conn.Start));
-            conn_thread.Start();
-            client_connections.Add(conn);
-            return true;
-        }
-
-        public bool Add_Server(Socket sock)
-        {
-            Connection conn;
-            conn = new Connection(sock, processFS);
-
-            Thread conn_thread = new Thread(new ThreadStart(conn.Start));
-            conn_thread.Start();
-            server_connections.Add(conn);
-            return true;
-        }
+        
 
 
     }
