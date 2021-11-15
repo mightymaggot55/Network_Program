@@ -19,12 +19,14 @@ namespace Test_Server_C_Sharp
         {
             int server_port = 11000;
             this.conn_manager = new ConnManager(server_port, true);
+            Console.WriteLine("Server: ONLINE");
         }
 
         public void boot_client()
         {
             int client_port = 12000;
             this.conn_manager = new ConnManager(client_port, false);
+            Console.WriteLine("Client: ONLINE");
         }
 
         static void Main(string[] args)
@@ -41,7 +43,6 @@ namespace Test_Server_C_Sharp
                     if (Q == "CLIENT" || Q == "client")
                     {
                         flag = true;
-                        Console.WriteLine(Q);
                         Console.WriteLine("Starting up Client");
                         UserInterface program = new UserInterface();
                         program.boot_client();
@@ -49,7 +50,6 @@ namespace Test_Server_C_Sharp
                     else if (Q == "SERVER" || Q == "server")
                     {
                         flag = true;
-                        Console.WriteLine(Q);
                         Console.WriteLine("Starting up Server");
                         UserInterface program = new UserInterface();
                         program.boot_server();

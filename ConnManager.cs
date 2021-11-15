@@ -35,8 +35,16 @@ namespace Test_Server_C_Sharp
         private void Load_Known_servers()
         {
             //This function gets a text file for known servers and reads it into the program
-            //file contains an IP Address and a port
-
+            string line;
+            string[] stringy;
+            // Read the file and display it line by line.  
+            System.IO.StreamReader file = new System.IO.StreamReader("Known_Servers.txt");
+            while ((line = file.ReadLine()) != null)
+            {
+                stringy = line.Split(" ");
+                server_locations.Add(new KeyValuePair<IPAddress, int>(IPAddress.Parse(stringy[0]), int.Parse(stringy[1])));
+            }
+            file.Close();
         }
 
         private void Heart_Beat()
@@ -124,45 +132,52 @@ namespace Test_Server_C_Sharp
 
             //This can be improved - set up better system for client port
             this.base_port = port;
+            this.server_port = port;
+            this.client_port = port;
+
+            client_wait = new ManualResetEvent(false);
+            client_wait.Reset();
 
             if (isServer == true)
-            {
-                this.server_port = port;
+            {                
                 Start_Server_Listener();
             }
             else if(isServer == false)
-            {
-                //additional funcitonality
-                client_wait = new ManualResetEvent(false);
-                client_wait.Reset();
-                this.client_port = port;
+            {                
                 Start_Client_Listener();
             }
         }
 
         public void Start_Client_Listener()
         {
-            client_wait.WaitOne(); //blocks thread until WaitHandle receives signal
-            //Fire up a listener to create new threads
-            ManualResetEvent wait_start_up = new ManualResetEvent(false);
-            //create new client listener
-            client_listener = new Listener(client_port, wait_start_up, clients);
-            //resets flag from wait_start_up
-            wait_start_up.Reset();
+           try
+           {
+                //client_wait.WaitOne(); //blocks thread until WaitHandle receives signal
+                                       //Fire up a listener to create new threads
+                ManualResetEvent wait_start_up = new ManualResetEvent(false);
+                //create new client listener
+                client_listener = new Listener(client_port, wait_start_up, clients);
+                //resets flag from wait_start_up
+                wait_start_up.Reset();
 
-            //open listening thread
-            Thread listen_thread = new Thread(new ThreadStart(client_listener.Start));
-            //start listener thread
-            listen_thread.Start();
-            //waits for flag
-            wait_start_up.WaitOne();
-            //returns the clients port
-            client_port = client_listener.getPort();
+                //open listening thread
+                Thread listen_thread = new Thread(new ThreadStart(client_listener.Start));
+                //start listener thread
+                listen_thread.Start();
+                //waits for flag
+                wait_start_up.WaitOne();
+                //returns the clients port
+                client_port = client_listener.getPort();
 
-            Console.WriteLine("Connected Client (Listener) on Port" + client_port);
-            if(!root)
+                Console.WriteLine("Client Port: " + client_port);
+                if (!root)
+                {
+                    servers["ROOT"]._state.Enqueue_Write("CLIENTPORT<FS>" + Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString() + "<FS>" + client_port);
+                }
+            }
+            catch (Exception _error)
             {
-                servers["ROOT"]._state.Enqueue_Write("CLIENTPORT<FS>" + Dns.GetHostEntry(Dns.GetHostName()).AddressList[0].ToString() + "<FS>" + client_port);
+
             }
         }
 
@@ -176,18 +191,25 @@ namespace Test_Server_C_Sharp
                 {
                     //create new End Point
                     IPEndPoint localEndPoint = new IPEndPoint(server_list.Key, server_list.Value);
+                    
                     //create new socket to send
                     Socket sender = new Socket(server_list.Key.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    
                     //connect Socket sender to new local end point
                     sender.Connect(localEndPoint);
+                    
                     //create new connection - uses sender socket 
                     Connection connection = new Connection(sender, processFS);
+                    
                     //create new thread
                     Thread conn_thread = new Thread(new ThreadStart(connection.Start));
+                    
                     //start new connection thread
                     conn_thread.Start();
+                    
                     //add to server connection lists the connection 
                     server_connections.Add(connection);
+                    root = false;
 
                     if (set_root)
                     {
@@ -201,8 +223,7 @@ namespace Test_Server_C_Sharp
                 catch (Exception _event)
                 {
                     Console.WriteLine(_event);
-                }                
-                
+                }            
             }
         //Fire up listener to create new threads
         ManualResetEvent wait_start_up = new ManualResetEvent(false);
@@ -219,8 +240,8 @@ namespace Test_Server_C_Sharp
             {
                 Console.WriteLine(((IPEndPoint)servers["ROOT"]._state.sock.RemoteEndPoint).Address.ToString() + ":" + ((IPEndPoint)servers["ROOT"]._state.sock.RemoteEndPoint).Port.ToString());
             }
-            Console.WriteLine("Connected Server Listener on Port: " + server_port);
-            //client_wait.Set();
+            Console.WriteLine("Server Port: " + server_port);
+            wait_start_up.Set();
         }
 
         public int processFS(Connection conn)
